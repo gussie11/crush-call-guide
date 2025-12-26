@@ -39,6 +39,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # --- MODEL CONFIGURATION ---
+# Using the experimental model as it works for your key
 MODEL_NAME = 'models/gemini-2.0-flash-exp'
 
 # --- GENERATION LOGIC ---
@@ -71,9 +72,9 @@ Your task is to write a **Sales Engagement Guide** based on the Canonical Archit
 3. Use the news to inform the "Proximity Hook" and "Harmonization" sections.
 
 **THEORETICAL BASIS (CANONICAL):**
-- **Parallel Paths:** Track Company Goals vs. People Fears.
-- **Neuroscience:** Low proximity triggers cortisol (defense); high proximity triggers oxytocin (trust).
-- **Adoption Risk:** The primary barrier is not "lack of pain" but "fear of the future".
+- [cite_start]**Parallel Paths:** Track Company Goals vs. People Fears[cite: 184].
+- [cite_start]**Neuroscience:** Low proximity triggers cortisol (defense); high proximity triggers oxytocin (trust)[cite: 204].
+- [cite_start]**Adoption Risk:** The primary barrier is not "lack of pain" but "fear of the future"[cite: 179].
 
 **INPUTS:**
 - Customer: {customer_name} ({industry})
