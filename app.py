@@ -39,32 +39,22 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # --- MODEL CONFIGURATION ---
-# We use the experimental model because you confirmed it works for you.
 MODEL_NAME = 'models/gemini-2.0-flash-exp'
 
-# --- GENERATION LOGIC (Fail-Safe Mode) ---
+# --- GENERATION LOGIC ---
 def generate_call_guide(prompt, use_search=True):
-    """
-    1. Tries to use Google Search.
-    2. If it hits ANY error (404, Permission, etc.), it silently falls back to standard text.
-    """
-    
     # ATTEMPT 1: Search Mode
     if use_search:
         try:
-            # Check if we can initialize with the tool
             model = genai.GenerativeModel(MODEL_NAME, tools='google_search_retrieval')
             response = model.generate_content(prompt)
             return response.text, True  # Success = True
-        except Exception as e:
-            # If it fails, we catch it here. 
-            # We will return 'False' so the UI knows we used the fallback.
-            pass 
+        except Exception:
+            pass # Silently fail to fallback
             
     # ATTEMPT 2: Text-Only Mode (Fallback)
     try:
-        # Re-initialize WITHOUT tools (Safe Mode)
-        model = genai.GenerativeModel(MODEL_NAME) 
+        model = genai.GenerativeModel(MODEL_NAME) # No tools
         response = model.generate_content(prompt)
         return response.text, False # Success = False (we used fallback)
     except Exception as e:
@@ -76,8 +66,12 @@ You are an expert Sales Coach using the "CRUSH" methodology.
 Your task is to write a **Rep-Facing Call Guide** for a specific sales conversation.
 
 **INSTRUCTION ON RESEARCH:**
-If you have access to Google Search tools, find **recent news** (last 6 months) about **{customer_name}** in the **{industry}** sector.
-If you DO NOT have access to search tools (or if they fail), rely on your internal knowledge and the industry context provided.
+1. First, check the **User Provided News** below. If it exists, PRIORITIZE this information.
+2. Second, if you have Google Search access, find **recent news** (last 6 months) about **{customer_name}**.
+3. If neither is available, rely on your internal knowledge.
+
+**USER PROVIDED NEWS / CONTEXT:**
+"{user_news}"
 
 **THE GOLDEN RULES:**
 1. This is NOT a pitch. Do not list features. Do not "sell".
@@ -96,14 +90,14 @@ If you DO NOT have access to search tools (or if they fail), rely on your intern
 
 **OUTPUT FORMAT (Markdown):**
 
-> **🔍 Context Check:**
-> *State clearly if you found specific news or if you are using general industry trends.*
+> **🔍 Context Used:**
+> *Briefly state if you used User News, Google Search, or General Trends.*
 
 ---
 
 ## 1. Frame the Decision (The Opening)
 *Goal: Clarify why we are here and confirm the decision stage.*
-- **Context Hook:** "I saw the news about [Insert News OR Industry Trend]..." (Connect this to the need for {context}).
+- **Context Hook:** "I saw the news about [Insert Real News]..." (Connect this to the need for {context}).
 - **Stage Check:** Include a specific question to confirm they are actually at **{cdm_stage}**.
 - **Role Check:** Include a question to confirm their role/concern as **{rubie_role}**.
 
@@ -117,7 +111,7 @@ If you DO NOT have access to search tools (or if they fail), rely on your intern
 
 ## 3. Remove Fear (Harmonization)
 *Goal: Surface blockers. Answer: "Why might this NOT work?"*
-- Provide 3 specific "Harmonization" questions. (Predict blockers based on the industry/news).
+- Provide 3 specific "Harmonization" questions. (Predict blockers based on the news/context).
 - **Closing Question:** Provide the exact script for the "Consolidate Clarity" close.
 """
 
@@ -152,7 +146,7 @@ ROLE_LOGIC_MAP = {
 
 # --- UI LAYOUT ---
 st.title("📞 CRUSH Sales Call Guide")
-st.markdown("Generates a call script using **Google Search** (if available) or standard AI context.")
+st.markdown("Generates a call script using **Hybrid Research** (Google Search + Your Notes).")
 
 with st.form("call_form"):
     # Row 1: Basic Info
@@ -164,7 +158,7 @@ with st.form("call_form"):
         context = st.text_input("Product/Context", placeholder="e.g. ERP Migration")
         rubie_role = st.selectbox("RUBIE Perspective", list(ROLE_LOGIC_MAP.keys()))
 
-    # Row 2: Stage
+    # Row 2: Stage & Manual News
     col3, col4 = st.columns(2)
     with col3:
         cdm_stage = st.selectbox("Current Decision Stage (CDM)", 
@@ -175,8 +169,13 @@ with st.form("call_form"):
                                   "Stage 4 (Usage)", 
                                   "Stage 7 (Renew)"])
     with col4:
-        # Search toggle
-        use_search = st.checkbox("Attempt Google Search (Grounding)", value=True)
+        # MANUAL NEWS INPUT (The Fallback Fix)
+        user_news = st.text_area("Recent News / Context (Optional)", 
+                                 placeholder="Paste recent news here if Search fails (e.g. 'Just acquired by X', 'New CFO started').",
+                                 height=100)
+    
+    # Search toggle
+    use_search = st.checkbox("Attempt Google Search (Grounding)", value=True)
         
     submit = st.form_submit_button("Generate Call Guide")
 
@@ -186,13 +185,14 @@ if submit:
     else:
         role_data = ROLE_LOGIC_MAP[rubie_role]
         
-        with st.spinner(f"🔍 Analyzing '{customer_name}'..."):
+        with st.spinner(f"🔍 Drafting guide for '{customer_name}'..."):
             final_prompt = MASTER_PROMPT.format(
                 customer_name=customer_name,
                 industry=industry,
                 rubie_role=rubie_role,
                 cdm_stage=cdm_stage,
                 context=context,
+                user_news=user_news if user_news else "None provided.",
                 role_logic=role_data['logic'],
                 focus_areas=role_data['focus_areas'],
                 focus_topic_1=role_data['topics'][0],
@@ -204,7 +204,7 @@ if submit:
             
             # DISPLAY STATUS
             if use_search and not search_success:
-                st.info("ℹ️ **Note:** Live Search unavailable (API limitation). Using standard AI knowledge.")
+                st.info("ℹ️ **Note:** Auto-Search unavailable. Using your notes & internal knowledge.")
             elif use_search and search_success:
                 st.success("✅ Live Research Complete.")
             
