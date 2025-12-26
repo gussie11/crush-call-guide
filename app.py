@@ -23,6 +23,13 @@ div.stButton > button {
     margin-bottom: 1rem;
     border-left: 5px solid #4285f4;
 }
+.warning-box {
+    padding: 1rem;
+    background-color: #fff3cd;
+    border-radius: 8px;
+    border-left: 5px solid #ffc107;
+    margin-bottom: 1rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -39,7 +46,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # --- MODEL CONFIGURATION ---
-MODEL_NAME = 'models/gemini-2.0-flash-exp'
+MODEL_NAME = 'models/gemini-1.5-flash'
 
 # --- GENERATION LOGIC ---
 def generate_call_guide(prompt, use_search=True):
@@ -63,55 +70,75 @@ def generate_call_guide(prompt, use_search=True):
 # --- PROMPT LOGIC ---
 MASTER_PROMPT = """
 You are an expert Sales Coach using the "CRUSH" methodology. 
-Your task is to write a **Rep-Facing Call Guide** for a specific sales conversation.
+Your task is to write a **Strategic Prep Brief** and **Rep-Facing Call Guide**.
 
 **INSTRUCTION ON RESEARCH:**
 1. Check **User Provided News** below.
-2. If available, Search Google for **recent news** (last 6 months) about **{customer_name}**.
+2. If available, Search Google for **recent news** (last 6 months) about **{customer_name}** in **{industry}**.
 3. Fallback to internal knowledge if needed.
 
 **USER PROVIDED NEWS / CONTEXT:**
 "{user_news}"
 
-**THE GOLDEN RULES:**
-1. This is NOT a pitch. Do not list features.
-2. This is a decision-alignment conversation.
-3. You must follow the exact 3-part cadence: Frame -> Shape -> Remove Fear.
+**THEORY: HOLISTIC SELLING & PARALLEL PATHS**
+- **Company Path:** Logic, Goals, Risks (CDM Journey).
+- **People Path:** Emotion, Aspirations, Fears (RUBIE Perspective).
+- **Neuro-Rule:** You cannot solve a "Person" fear with a "Company" goal.
 
 **INPUTS:**
 - Customer: {customer_name} ({industry})
 - Role: {rubie_role}
 - Stage: {cdm_stage}
 - Context: {context}
+- **Proximity Level:** {proximity} (See specific instructions below)
 
 **LOGIC FOR THIS STAKEHOLDER ({rubie_role}):**
 {role_logic}
 
 **OUTPUT FORMAT (Markdown):**
 
-> **🔍 Context Used:**
-> *Briefly state if you used User News, Google Search, or General Trends.*
+## 🧠 Phase 0: Pre-Call Strategy (Internal Prep)
+*Do not read this to the customer. This is your cognitive scaffold.*
+
+### 1. Proximity Assessment
+* **Current Level:** {proximity}
+* **Neuro-Impact:** *(If Level 4: "Warning: Low trust. High Cortisol risk. Strategy: Pivot to Level 3 via industry relevance." | If Level 1-2: "High Trust. Use Oxytocin pathway.")*
+
+### 2. The Parallel Paths (Holistic Map)
+* **🏢 Company Path (Logic):**
+    * *Goal:* [Predict 1 strategic goal based on Industry/Stage]
+    * *Risk:* [Predict 1 business risk]
+* **👤 People Path (Emotion):**
+    * *Aspiration:* [Predict what this {rubie_role} wants personally, e.g., promotion, ease]
+    * *Fear:* [Predict their specific Adoption Risk, e.g., "looking foolish"]
 
 ---
 
-## 1. Frame the Decision (The Opening)
-*Goal: Clarify why we are here and confirm the decision stage.*
-- **Context Hook:** "I saw the news about [Insert Specific News/Trend]..." (Connect this to the need for {context}).
-- **Stage Check:** Include a specific question to confirm they are actually at **{cdm_stage}**.
-- **Role Check:** Include a question to confirm their role/concern as **{rubie_role}**.
+## 🎯 Context Briefing
+* **News/Trend:** ...
+* **Strategic implication:** ...
 
-## 2. Shape the Future (The Middle)
-*Goal: Define specific adoption outcomes and risk.*
+---
+
+## 📞 Rep-Facing Call Script
+
+### 1. Frame the Decision (The Opening)
+*Goal: Regulate neurochemistry (Safety) and confirm Stage.*
+- **Context Hook:** "I saw the news about..." (Use Level 3 Related Proximity).
+- **Stage Check:** Question to confirm **{cdm_stage}**.
+- **Role Check:** Question to confirm **{rubie_role}**.
+
+### 2. Shape the Future (The Middle)
+*Goal: Reduce Cognitive Load. Define Change.*
 *CRUSH Focus Areas:* **{focus_areas}**
-- **Change:** Ask questions to define where they are today vs. where they want to be.
-- **{focus_topic_1}:** Ask 2 high-impact questions specific to their role's concern.
-- **{focus_topic_2}:** Ask 2 high-impact questions specific to their role's concern.
-- *Remind the rep: "If Change is unclear, stop."*
+- **Change:** Question defining "Where are you today?" vs. "Future State".
+- **{focus_topic_1}:** 2 High-impact questions mapping to the **People Path**.
+- **{focus_topic_2}:** 2 High-impact questions mapping to the **Company Path**.
 
-## 3. Remove Fear (Harmonization)
-*Goal: Surface blockers. Answer: "Why might this NOT work?"*
-- Provide 3 specific "Harmonization" questions. (Predict blockers based on the news/context provided above).
-- **Closing Question:** Provide the exact script for the "Consolidate Clarity" close.
+### 3. Remove Fear (Harmonization)
+*Goal: Address Adoption Risk.*
+- **Harmonization:** 3 questions to uncover "Why might this NOT work?" (Blockers/Dependencies).
+- **Close:** Exact script for "Consolidate Clarity" (Not "Closing").
 """
 
 # --- LOGIC MAPPING ---
@@ -145,19 +172,17 @@ ROLE_LOGIC_MAP = {
 
 # --- UI LAYOUT ---
 st.title("📞 CRUSH Sales Call Guide")
-st.markdown("Generates a call script using **Hybrid Research** (Google Search + Your Notes).")
+st.markdown("Generates a **Holistic Sales Strategy** (Prep + Script) using Hybrid Research.")
 
 with st.form("call_form"):
     col1, col2 = st.columns(2)
     with col1:
         customer_name = st.text_input("Customer Company Name", placeholder="e.g. Acme Corp")
         industry = st.text_input("Industry / Vertical", placeholder="e.g. Manufacturing")
-    with col2:
-        context = st.text_input("Product/Context", placeholder="e.g. ERP Migration")
         rubie_role = st.selectbox("RUBIE Perspective", list(ROLE_LOGIC_MAP.keys()))
 
-    col3, col4 = st.columns(2)
-    with col3:
+    with col2:
+        context = st.text_input("Product/Context", placeholder="e.g. ERP Migration")
         cdm_stage = st.selectbox("Current Decision Stage (CDM)", 
                                  ["Stage 0->1 (Mobilizing)", 
                                   "Stage 1 (Sources)", 
@@ -165,13 +190,19 @@ with st.form("call_form"):
                                   "Stage 3 (Ordered)", 
                                   "Stage 4 (Usage)", 
                                   "Stage 7 (Renew)"])
-    with col4:
-        user_news = st.text_area("Recent News / Context (Optional)", 
-                                 placeholder="Paste recent news here if Search fails.",
-                                 height=100)
+        # NEW PROXIMITY FIELD
+        proximity = st.selectbox("Current Proximity Level", 
+                                 ["Level 1 (Direct - Insider)", 
+                                  "Level 2 (Transferred - Referral)", 
+                                  "Level 3 (Related - Industry)", 
+                                  "Level 4 (Clichés - Cold)"])
+
+    user_news = st.text_area("Recent News / Context (Optional)", 
+                             placeholder="Paste recent news here if Search fails.",
+                             height=80)
     
     use_search = st.checkbox("Attempt Google Search (Grounding)", value=True)
-    submit = st.form_submit_button("Generate Call Guide")
+    submit = st.form_submit_button("Generate Strategy & Guide")
 
 if submit:
     if not customer_name or not context:
@@ -179,13 +210,14 @@ if submit:
     else:
         role_data = ROLE_LOGIC_MAP[rubie_role]
         
-        with st.spinner(f"🔍 Drafting guide for '{customer_name}'..."):
+        with st.spinner(f"🔍 Analyzing '{customer_name}'..."):
             final_prompt = MASTER_PROMPT.format(
                 customer_name=customer_name,
                 industry=industry,
                 rubie_role=rubie_role,
                 cdm_stage=cdm_stage,
                 context=context,
+                proximity=proximity,
                 user_news=user_news if user_news else "None provided.",
                 role_logic=role_data['logic'],
                 focus_areas=role_data['focus_areas'],
@@ -200,6 +232,6 @@ if submit:
             elif use_search and search_success:
                 st.success("✅ Live Research Complete.")
             
-            st.markdown(f"### 📝 Call Guide for {customer_name}")
+            st.markdown(f"### 📝 Strategic Guide for {customer_name}")
             st.markdown(result_text)
             st.text_area("Copy Raw Text", value=result_text, height=100)
