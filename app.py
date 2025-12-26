@@ -3,7 +3,7 @@ import google.generativeai as genai
 from google.api_core import exceptions
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="CRUSH Canonical Guide", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="CRUSH Engagement Guide", page_icon="🧠", layout="wide")
 
 # --- CSS ---
 st.markdown("""
@@ -50,13 +50,13 @@ def generate_guide(prompt):
 # --- PROMPT LOGIC ---
 MASTER_PROMPT = """
 You are an expert Sales Coach using the "CRUSH" methodology.
-Your task is to write a **Sales Engagement Guide** based strictly on the Canonical Architecture.
+Your task is to write a **Sales Engagement Guide** based strictly on the Canonical Architecture[cite: 162].
 
 **CORE CRUSH PRINCIPLES:**
-1. [cite_start]**Parallel Paths:** You must separate the "Company Path" (Logic/Goals) from the "People Path" (Emotion/Fear)[cite: 184].
-2. [cite_start]**Adoption Risk:** The enemy is not competition; it is "Adoption Risk" (fear that the future state won't yield value)[cite: 179].
-3. [cite_start]**Visual Agenda:** You must script a "Visual Agenda" to lower cognitive load[cite: 227].
-4. **Harmonization:** You do not "close." [cite_start]You "Harmonize" (remove risk)[cite: 275].
+1. **Parallel Paths:** You must separate the "Company Path" (Logic/Goals) from the "People Path" (Emotion/Fear)[cite: 184].
+2. **Adoption Risk:** The enemy is not competition; it is "Adoption Risk" (fear that the future state won't yield value)[cite: 179].
+3. **Visual Agenda:** You must script a "Visual Agenda" to lower cognitive load[cite: 227].
+4. **Harmonization:** You do not "close." You "Harmonize" (remove risk)[cite: 275].
 
 **INPUTS:**
 - Customer: {customer_name} ({industry})
@@ -66,7 +66,7 @@ Your task is to write a **Sales Engagement Guide** based strictly on the Canonic
 **OUTPUT FORMAT (Markdown):**
 
 ## 🧠 Phase 1: Pre-Call Preparation (The Parallel Paths)
-[cite_start]*Define the dual tracks we must manage:* [cite: 186-193]
+*Define the dual tracks we must manage [cite: 250-252]:*
 * **🏢 Company Path (The Logic):** What is the business trying to achieve? (e.g., Efficiency, Market Share).
 * **👤 People Path (The Emotion):** What is the human afraid of? (e.g., Loss of status, Complexity, Looking foolish). *Note: You cannot solve a Person fear with a Company goal.*
 
@@ -75,7 +75,7 @@ Your task is to write a **Sales Engagement Guide** based strictly on the Canonic
 ## 📞 Rep-Facing Engagement Script
 
 ### Phase 2: Opening (The Trust Gateway)
-[cite_start]*Goal: Regulate neurochemistry and lower cognitive load.* [cite: 258]
+*Goal: Regulate neurochemistry and lower cognitive load[cite: 258].*
 * **The Visual Agenda Script:** Write a concise script that maps:
     1. **Current State:** "We are here."
     2. **Destination:** "We want to get here."
@@ -83,17 +83,17 @@ Your task is to write a **Sales Engagement Guide** based strictly on the Canonic
 * **Alignment Check:** "Does this map to how you see it?"
 
 ### Phase 3: Change (The UCP)
-[cite_start]*Goal: Shift from 'Pain' to 'Adoption Risk'.* [cite: 265]
+*Goal: Shift from 'Pain' to 'Adoption Risk'[cite: 265].*
 * **Unique Change Point (UCP):** Script a question that challenges their status quo.
     * *Draft:* "Most companies in {industry} try to fix [Problem] by [Standard Approach], but they fail because of [Adoption Risk]. How are you ensuring your team actually adopts this change?"
 
 ### Phase 4: Solution (Sense-Making)
-[cite_start]*Goal: Sell the safety of the decision, not the features.* [cite: 270]
+*Goal: Sell the safety of the decision, not the features[cite: 270].*
 * **Usage & Support:** Script a specific question about "Day 1" or "Support" to prove safety.
     * *Draft:* "The technology is the easy part. The hard part is [Usage Challenge]. How will we support your team on Day 1?"
 
 ### Phase 5: Closing (Harmonization)
-[cite_start]*Goal: Risk Removal (Not 'Closing').* [cite: 275]
+*Goal: Risk Removal (Not 'Closing')[cite: 274].*
 * **The Harmonization Question:** Script a question to surface blockers.
     * *Draft:* "Why might this *not* work inside {customer_name}? Who else needs to be aligned?"
 * **Risk Reversal:** "What do you need from us to feel safe moving to the next step?"
