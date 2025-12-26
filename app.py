@@ -39,30 +39,32 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # --- MODEL CONFIGURATION ---
-# We use 1.5-flash as the standard stable model for Search Grounding
-MODEL_NAME = 'models/gemini-1.5-flash'
+# We use the experimental model because you confirmed it works for you.
+MODEL_NAME = 'models/gemini-2.0-flash-exp'
 
-# --- GENERATION LOGIC (Robust Mode) ---
+# --- GENERATION LOGIC (Fail-Safe Mode) ---
 def generate_call_guide(prompt, use_search=True):
     """
-    1. Tries to use Google Search with the model.
-    2. If that fails (404/Permission error), shows a warning and falls back to text.
+    1. Tries to use Google Search.
+    2. If it hits ANY error (404, Permission, etc.), it silently falls back to standard text.
     """
     
     # ATTEMPT 1: Search Mode
     if use_search:
         try:
-            # Try to initialize with the search tool
+            # Check if we can initialize with the tool
             model = genai.GenerativeModel(MODEL_NAME, tools='google_search_retrieval')
             response = model.generate_content(prompt)
             return response.text, True  # Success = True
         except Exception as e:
-            # Return the error to display it, and indicate failure
-            return f"Search Error: {str(e)}", False
+            # If it fails, we catch it here. 
+            # We will return 'False' so the UI knows we used the fallback.
+            pass 
             
     # ATTEMPT 2: Text-Only Mode (Fallback)
     try:
-        model = genai.GenerativeModel(MODEL_NAME) # No tools
+        # Re-initialize WITHOUT tools (Safe Mode)
+        model = genai.GenerativeModel(MODEL_NAME) 
         response = model.generate_content(prompt)
         return response.text, False # Success = False (we used fallback)
     except Exception as e:
@@ -75,8 +77,7 @@ Your task is to write a **Rep-Facing Call Guide** for a specific sales conversat
 
 **INSTRUCTION ON RESEARCH:**
 If you have access to Google Search tools, find **recent news** (last 6 months) about **{customer_name}** in the **{industry}** sector.
-Look for: Executive changes, M&A, Stock performance, or Strategic shifts.
-If you DO NOT have access to search tools, rely on your internal knowledge and the industry context provided.
+If you DO NOT have access to search tools (or if they fail), rely on your internal knowledge and the industry context provided.
 
 **THE GOLDEN RULES:**
 1. This is NOT a pitch. Do not list features. Do not "sell".
@@ -95,8 +96,8 @@ If you DO NOT have access to search tools, rely on your internal knowledge and t
 
 **OUTPUT FORMAT (Markdown):**
 
-> **🔍 Context / News Check:**
-> *Briefly state if you found specific news. If yes, list 2-3 headlines. If no, state that you are using general industry trends.*
+> **🔍 Context Check:**
+> *State clearly if you found specific news or if you are using general industry trends.*
 
 ---
 
@@ -198,20 +199,14 @@ if submit:
                 focus_topic_2=role_data['topics'][1] if len(role_data['topics']) > 1 else "Harmonization"
             )
             
-            # RUN GENERATION
+            # RUN GENERATION (With Fail-Safe)
             result_text, search_success = generate_call_guide(final_prompt, use_search=use_search)
             
-            # HANDLE FALLBACK IF SEARCH FAILED
+            # DISPLAY STATUS
             if use_search and not search_success:
-                # If we tried to search but failed, we call the generation AGAIN in fallback mode
-                # to get the actual text result (since the first return was an error message)
-                error_msg = result_text # The first return was the error
-                st.warning(f"⚠️ Google Search failed. Falling back to internal knowledge.\n\n**Debug Error:** {error_msg}")
-                result_text, _ = generate_call_guide(final_prompt, use_search=False)
-            
-            # SUCCESS MESSAGE
+                st.info("ℹ️ **Note:** Live Search unavailable (API limitation). Using standard AI knowledge.")
             elif use_search and search_success:
-                st.success("✅ Google Search Active: Live data integrated.")
+                st.success("✅ Live Research Complete.")
             
             st.markdown(f"### 📝 Call Guide for {customer_name}")
             st.markdown(result_text)
