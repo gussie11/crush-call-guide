@@ -39,14 +39,14 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # --- MODEL CONFIGURATION ---
-# We use the version you confirmed works: 2.0 Flash Experimental
-MODEL_NAME = 'models/gemini-2.0-flash-exp'
+# We use 1.5-flash because it is the stable standard for Google Search grounding.
+MODEL_NAME = 'models/gemini-1.5-flash'
 
-# --- GENERATION LOGIC (Safe Mode) ---
+# --- GENERATION LOGIC (Debug Mode) ---
 def generate_call_guide(prompt, use_search=True):
     """
     1. Tries to use Google Search with the model.
-    2. If that fails (404/Permission error), falls back to standard text mode.
+    2. If that fails (404/Permission error), shows a warning and falls back to text.
     """
     
     # ATTEMPT 1: Search Mode
@@ -56,9 +56,10 @@ def generate_call_guide(prompt, use_search=True):
             model = genai.GenerativeModel(MODEL_NAME, tools='google_search_retrieval')
             response = model.generate_content(prompt)
             return response.text
-        except Exception:
-            # Silently fail and move to Attempt 2
-            pass
+        except Exception as e:
+            # SHOW THE ERROR ON SCREEN so we know what's wrong
+            st.warning(f"⚠️ Google Search failed. Falling back to internal knowledge.\n\n**Error details:** {e}")
+            # Fall through to Attempt 2
     
     # ATTEMPT 2: Text-Only Mode (Fallback)
     try:
@@ -74,7 +75,8 @@ You are an expert Sales Coach using the "CRUSH" methodology.
 Your task is to write a **Rep-Facing Call Guide** for a specific sales conversation.
 
 **INSTRUCTION ON RESEARCH:**
-If you have access to Google Search tools, find **recent news** (last 90 days) about **{customer_name}**.
+If you have access to Google Search tools, find **recent news** (last 90 days) about **{customer_name}** in the **{industry}** sector.
+Look for: Executive changes, M&A, Stock performance, or Strategic shifts.
 If you DO NOT have access to search tools, rely on your internal knowledge and the industry context provided.
 
 **THE GOLDEN RULES:**
