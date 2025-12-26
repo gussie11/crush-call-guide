@@ -31,8 +31,8 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# We use 1.5 Flash because it supports Google Search Grounding natively and reliably.
-MODEL_NAME = 'models/gemini-1.5-flash-latest'
+# CHANGED: Reverted to the standard stable model tag
+MODEL_NAME = 'models/gemini-1.5-flash'
 
 # --- RETRY LOGIC ---
 def generate_content_with_retry(prompt):
