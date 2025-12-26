@@ -48,15 +48,15 @@ def generate_call_guide(prompt, use_search=True):
         try:
             model = genai.GenerativeModel(MODEL_NAME, tools='google_search_retrieval')
             response = model.generate_content(prompt)
-            return response.text, True  # Success = True
+            return response.text, True
         except Exception:
-            pass # Silently fail to fallback
+            pass 
             
-    # ATTEMPT 2: Text-Only Mode (Fallback)
+    # ATTEMPT 2: Fallback
     try:
-        model = genai.GenerativeModel(MODEL_NAME) # No tools
+        model = genai.GenerativeModel(MODEL_NAME)
         response = model.generate_content(prompt)
-        return response.text, False # Success = False (we used fallback)
+        return response.text, False
     except Exception as e:
         return f"Critical Error: {str(e)}", False
 
@@ -66,53 +66,54 @@ You are an expert Sales Coach using the "CRUSH" methodology.
 Your task is to write a **Rep-Facing Call Guide** for a specific sales conversation.
 
 **INSTRUCTION ON RESEARCH:**
-1. First, check the **User Provided News** below. If it exists, PRIORITIZE this information.
-2. Second, if you have Google Search access, find **recent news** (last 6 months) about **{customer_name}**.
-3. If neither is available, rely on your internal knowledge.
+1. Check **User Provided News** below.
+2. If available, Search Google for **recent news** (last 6 months) about **{customer_name}**.
+3. Fallback to internal knowledge if needed.
 
 **USER PROVIDED NEWS / CONTEXT:**
 "{user_news}"
 
 **THE GOLDEN RULES:**
-1. This is NOT a pitch. Do not list features. Do not "sell".
+1. This is NOT a pitch. Do not list features.
 2. This is a decision-alignment conversation.
 3. You must follow the exact 3-part cadence: Frame -> Shape -> Remove Fear.
 
 **INPUTS:**
-- Customer Company: {customer_name}
-- Industry/Type: {industry}
-- Stakeholder Role (RUBIE): {rubie_role}
-- Current Decision Stage (CDM): {cdm_stage}
-- Product/Context: {context}
+- Customer: {customer_name} ({industry})
+- Role: {rubie_role}
+- Stage: {cdm_stage}
+- Context: {context}
 
 **LOGIC FOR THIS STAKEHOLDER ({rubie_role}):**
 {role_logic}
 
 **OUTPUT FORMAT (Markdown):**
 
-> **🔍 Context Used:**
-> *Briefly state if you used User News, Google Search, or General Trends.*
+## 🎯 Context Briefing (Read First)
+*Summarize the key News or Industry Trends here as 3-4 distinct bullet points. Do not script this part; just list the facts.*
+* **News/Trend:** ...
+* **Strategic implication:** ...
 
 ---
 
 ## 1. Frame the Decision (The Opening)
 *Goal: Clarify why we are here and confirm the decision stage.*
-- **Context Hook:** "I saw the news about [Insert Real News]..." (Connect this to the need for {context}).
-- **Stage Check:** Include a specific question to confirm they are actually at **{cdm_stage}**.
-- **Role Check:** Include a question to confirm their role/concern as **{rubie_role}**.
+- **Context Hook:** Provide a natural, short opening line referencing the context above (e.g., "I saw the news about X...").
+- **Stage Check:** Question to confirm they are at **{cdm_stage}**.
+- **Role Check:** Question to confirm their role as **{rubie_role}**.
 
 ## 2. Shape the Future (The Middle)
 *Goal: Define specific adoption outcomes and risk.*
-*CRUSH Focus Areas for this role:* **{focus_areas}**
-- **Change:** Ask questions to define where they are today vs. where they want to be.
-- **{focus_topic_1}:** Ask 2 high-impact questions specific to their role's concern.
-- **{focus_topic_2}:** Ask 2 high-impact questions specific to their role's concern.
-- *Remind the rep: "If Change is unclear, stop. Nothing else matters."*
+*CRUSH Focus Areas:* **{focus_areas}**
+- **Change:** Question defining where they are today vs. future state.
+- **{focus_topic_1}:** 2 High-impact questions.
+- **{focus_topic_2}:** 2 High-impact questions.
+- *Remind the rep: "If Change is unclear, stop."*
 
 ## 3. Remove Fear (Harmonization)
-*Goal: Surface blockers. Answer: "Why might this NOT work?"*
-- Provide 3 specific "Harmonization" questions. (Predict blockers based on the news/context).
-- **Closing Question:** Provide the exact script for the "Consolidate Clarity" close.
+*Goal: Surface blockers.*
+- **Harmonization Questions:** 3 specific questions to uncover friction/dependencies (Use the Context Briefing to predict these blockers).
+- **Close:** Exact script for "Consolidate Clarity".
 """
 
 # --- LOGIC MAPPING ---
@@ -149,7 +150,6 @@ st.title("📞 CRUSH Sales Call Guide")
 st.markdown("Generates a call script using **Hybrid Research** (Google Search + Your Notes).")
 
 with st.form("call_form"):
-    # Row 1: Basic Info
     col1, col2 = st.columns(2)
     with col1:
         customer_name = st.text_input("Customer Company Name", placeholder="e.g. Acme Corp")
@@ -158,56 +158,5 @@ with st.form("call_form"):
         context = st.text_input("Product/Context", placeholder="e.g. ERP Migration")
         rubie_role = st.selectbox("RUBIE Perspective", list(ROLE_LOGIC_MAP.keys()))
 
-    # Row 2: Stage & Manual News
     col3, col4 = st.columns(2)
     with col3:
-        cdm_stage = st.selectbox("Current Decision Stage (CDM)", 
-                                 ["Stage 0->1 (Mobilizing)", 
-                                  "Stage 1 (Sources)", 
-                                  "Stage 2 (Selected)", 
-                                  "Stage 3 (Ordered)", 
-                                  "Stage 4 (Usage)", 
-                                  "Stage 7 (Renew)"])
-    with col4:
-        # MANUAL NEWS INPUT (The Fallback Fix)
-        user_news = st.text_area("Recent News / Context (Optional)", 
-                                 placeholder="Paste recent news here if Search fails (e.g. 'Just acquired by X', 'New CFO started').",
-                                 height=100)
-    
-    # Search toggle
-    use_search = st.checkbox("Attempt Google Search (Grounding)", value=True)
-        
-    submit = st.form_submit_button("Generate Call Guide")
-
-if submit:
-    if not customer_name or not context:
-        st.warning("⚠️ Please fill in Customer Name and Product Context.")
-    else:
-        role_data = ROLE_LOGIC_MAP[rubie_role]
-        
-        with st.spinner(f"🔍 Drafting guide for '{customer_name}'..."):
-            final_prompt = MASTER_PROMPT.format(
-                customer_name=customer_name,
-                industry=industry,
-                rubie_role=rubie_role,
-                cdm_stage=cdm_stage,
-                context=context,
-                user_news=user_news if user_news else "None provided.",
-                role_logic=role_data['logic'],
-                focus_areas=role_data['focus_areas'],
-                focus_topic_1=role_data['topics'][0],
-                focus_topic_2=role_data['topics'][1] if len(role_data['topics']) > 1 else "Harmonization"
-            )
-            
-            # RUN GENERATION (With Fail-Safe)
-            result_text, search_success = generate_call_guide(final_prompt, use_search=use_search)
-            
-            # DISPLAY STATUS
-            if use_search and not search_success:
-                st.info("ℹ️ **Note:** Auto-Search unavailable. Using your notes & internal knowledge.")
-            elif use_search and search_success:
-                st.success("✅ Live Research Complete.")
-            
-            st.markdown(f"### 📝 Call Guide for {customer_name}")
-            st.markdown(result_text)
-            st.text_area("Copy Raw Text", value=result_text, height=100)
