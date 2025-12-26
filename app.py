@@ -4,7 +4,7 @@ from google.api_core import exceptions
 import time
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="CRUSH Progression Guide", page_icon="🗣️", layout="wide")
+st.set_page_config(page_title="CRUSH Engagement Guide", page_icon="🗣️", layout="wide")
 
 # --- CSS ---
 st.markdown("""
@@ -62,12 +62,11 @@ def generate_call_guide(prompt, use_search=True):
 
 # --- PROMPT LOGIC ---
 MASTER_PROMPT = """
-You are an elite Sales Coach executing a "Progression Call" using the CRUSH methodology.
-Your goal is to write a **Narrative Playbook** for an upcoming meeting. 
+You are an elite Sales Coach using the "CRUSH" methodology.
+Your goal is to write a **Narrative Playbook** for an upcoming progression meeting.
 
 **CONTEXT:**
 - This is NOT a cold call. The door is open.
-- The goal is not to "pitch" but to orchestrate a decision.
 - You must speak in natural, fluid paragraphs.
 
 **INPUTS:**
@@ -78,43 +77,48 @@ Your goal is to write a **Narrative Playbook** for an upcoming meeting.
 
 **INSTRUCTION ON RESEARCH:**
 1. Check User Notes first.
-2. If available, Search Google for recent news (last 6 months) about **{customer_name}** to use as conversational bridges.
-3. If no news found, rely on industry trends.
+2. If available, Search Google for recent news (last 6 months) about **{customer_name}**.
+3. Use this news to build the "Proximity" bridge in Phase 2.
 
-**OUTPUT FORMAT:**
+**OUTPUT FORMAT (Follow the 5 Canonical Phases):**
 
-## 1. How to Prepare (The Mindset)
-*Write 2 short paragraphs explaining exactly what the rep needs to get straight in their head before they dial.*
-- Explain the distinction between the "Company Goal" (Logic) and the "Person's Fear" (Emotion) for this specific deal.
-- Define what "Adoption Risk" likely looks like here (e.g., "They are afraid of X...").
+## Phase 1: Preparation (Cognitive Scaffold)
+*Write 2 paragraphs on the "Mindset" for this specific deal.*
+- Focus on the "Parallel Paths": Distinguish the Company's Logical Goal from the Person's Emotional Fear (Adoption Risk).
+- Define exactly what "Change" means for them (e.g., Transactional -> Consultative).
 
 ---
 
-## 2. The Talk Track (Execution)
+## The Talk Track (Execution)
 
-### The Opening (Regulating the Room)
-*Explain in one sentence why we start with a Visual Agenda instead of pleasantries.*
+### Phase 2: Opening (The Trust Gateway)
+*Explain why we must regulate the room before pitching.*
 **The Script:**
-> Write the exact opening lines. Start with a reference to the news/context provided, then pivot immediately to a "Visual Agenda" to set the frame. 
-> "I saw the news about X... which is actually why I wanted to frame our time today..."
+> Write the opening. Start with the News/Context to establish Proximity, then pivot to a **Visual Agenda** (Past -> Future -> Path) to lower cognitive load.
 
-### The Middle (Shaping the Future)
-*Explain that we need to pivot from "Features" to "Change".*
+### Phase 3: Change (The UCP)
+*We must validate the shift they are trying to make.*
 **The Script:**
-> Write the specific questions to ask to define where they are today vs. where they want to be.
-> Provide a "Sense-Making" statement: "It sounds like you are trying to move from [Current State] to [Future State], is that right?"
+> Write the question to define the **Unique Change Point (UCP)**. 
+> "It sounds like you are trying to shift from [Current State] to [Future State]..."
+> Ask a validation question to confirm they see the risk in staying the same.
 
-### The End (Harmonization)
-*Explain why we don't "Close" but instead "Harmonize".*
+### Phase 4: Solution (Sense-Making)
+*Focus on Usage and Support to reduce indecision.*
 **The Script:**
-> Write the specific question to uncover blockers. 
-> "Typically, initiatives like this fail because of [Blocker]. Why might this NOT work inside {customer_name}?"
-> End with the "Consolidate Clarity" statement: "Based on this, what do you need from us to feel confident moving forward?"
+> Don't pitch features. Pitch the "Safety" of the solution.
+> Write a question about **Usage** (Day 1 experience) or **Support** (Resources) to prove we won't leave them stranded.
+
+### Phase 5: Closing (Harmonization)
+*Risk Removal, not pressure.*
+**The Script:**
+> Ask the **Harmonization Question**: "Why might this NOT work inside {customer_name}?" (Surface blockers/dependencies).
+> End with **Risk Reversal**: "What do you need from us to feel safe moving to the next step?"
 """
 
 # --- UI LAYOUT ---
-st.title("🗣️ CRUSH Progression Guide")
-st.markdown("Generates a **narrative script** for navigating a live deal.")
+st.title("🗣️ CRUSH Engagement Guide")
+st.markdown("Generates a **narrative script** based on the 5-Phase Canonical Architecture.")
 
 with st.form("call_form"):
     col1, col2 = st.columns(2)
@@ -158,6 +162,6 @@ if submit:
             elif use_search and search_success:
                 st.success("✅ Live Research Complete.")
             
-            st.markdown(f"### 🗣️ Progression Strategy: {customer_name}")
+            st.markdown(f"### 🗣️ Engagement Strategy: {customer_name}")
             st.markdown(result_text)
             st.text_area("Copy Raw Text", value=result_text, height=100)
