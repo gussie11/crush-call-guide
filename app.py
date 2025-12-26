@@ -4,7 +4,7 @@ from google.api_core import exceptions
 import time
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="CRUSH Sales Call Guide", page_icon="📞", layout="wide")
+st.set_page_config(page_title="CRUSH Sales Engagement Guide", page_icon="🧠", layout="wide")
 
 # --- CSS ---
 st.markdown("""
@@ -22,13 +22,6 @@ div.stButton > button {
     border-radius: 8px;
     margin-bottom: 1rem;
     border-left: 5px solid #4285f4;
-}
-.warning-box {
-    padding: 1rem;
-    background-color: #fff3cd;
-    border-radius: 8px;
-    border-left: 5px solid #ffc107;
-    margin-bottom: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -71,7 +64,7 @@ def generate_call_guide(prompt, use_search=True):
 # --- PROMPT LOGIC ---
 MASTER_PROMPT = """
 You are an expert Sales Coach using the "CRUSH" methodology. 
-Your task is to write a **Strategic Prep Brief** and **Rep-Facing Call Guide**.
+Your task is to write a **Sales Engagement Guide** based strictly on the Canonical Architecture.
 
 **INSTRUCTION ON RESEARCH:**
 1. Check **User Provided News** below.
@@ -81,10 +74,10 @@ Your task is to write a **Strategic Prep Brief** and **Rep-Facing Call Guide**.
 **USER PROVIDED NEWS / CONTEXT:**
 "{user_news}"
 
-**THEORY: HOLISTIC SELLING & PARALLEL PATHS**
-- **Company Path:** Logic, Goals, Risks (CDM Journey).
-- **People Path:** Emotion, Aspirations, Fears (RUBIE Perspective).
-- **Neuro-Rule:** You cannot solve a "Person" fear with a "Company" goal.
+**THEORETICAL BASIS (CANONICAL):**
+- **Goal:** Regulate threat responses and reduce Adoption Risk[cite: 282].
+- **Parallel Paths:** You must track the "Company Path" (Goals/Risks) and "People Path" (Aspirations/Fears) [cite: 250-252].
+- **Neuroscience:** Low proximity triggers cortisol (defense); high proximity triggers oxytocin (trust)[cite: 204].
 
 **INPUTS:**
 - Customer: {customer_name} ({industry})
@@ -98,19 +91,19 @@ Your task is to write a **Strategic Prep Brief** and **Rep-Facing Call Guide**.
 
 **OUTPUT FORMAT (Markdown):**
 
-## 🧠 Phase 0: Pre-Call Strategy (Internal Prep)
-*Do not read this to the customer. This is your cognitive scaffold.*
+## 🧠 Phase 1: Pre-Call Preparation — Cognitive Scaffold
+*Internal Strategy Only. Do not read to customer.* [cite: 249]
 
-### 1. Proximity Assessment
+### 1. Proximity & Neuro-Assessment
 * **Current Level:** {proximity}
-* **Neuro-Impact:** *(If Level 4: "Warning: Low trust. High Cortisol risk. Strategy: Pivot to Level 3 via industry relevance." | If Level 1-2: "High Trust. Use Oxytocin pathway.")*
+* **Strategy:** *(If Level 4: "Warning: Generic claims will trigger cortisol/defense. Pivot to Level 3 via industry context." | If Level 1-2: "Trust exists. Use oxytocin pathway.")* [cite: 204-206]
 
-### 2. The Parallel Paths (Holistic Map)
+### 2. The Parallel Paths (Holistic Map) [cite: 184]
 * **🏢 Company Path (Logic):**
     * *Goal:* [Predict 1 strategic goal based on Industry/Stage]
     * *Risk:* [Predict 1 business risk]
 * **👤 People Path (Emotion):**
-    * *Aspiration:* [Predict what this {rubie_role} wants personally, e.g., promotion, ease]
+    * *Aspiration:* [Predict what this {rubie_role} wants personally]
     * *Fear:* [Predict their specific Adoption Risk, e.g., "looking foolish"]
 
 ---
@@ -121,59 +114,62 @@ Your task is to write a **Strategic Prep Brief** and **Rep-Facing Call Guide**.
 
 ---
 
-## 📞 Rep-Facing Call Script
+## 📞 Rep-Facing Engagement Script
 
-### 1. Frame the Decision (The Opening)
-*Goal: Regulate neurochemistry (Safety) and confirm Stage.*
-- **Context Hook:** "I saw the news about..." (Use Level 3 Related Proximity).
-- **Stage Check:** Question to confirm **{cdm_stage}**.
-- **Role Check:** Question to confirm **{rubie_role}**.
+### Phase 2: Opening — Trust Gateway [cite: 257]
+*Goal: Regulate neurochemistry. Set a collaborative frame.*
+- **Proximity Hook:** "I saw the news about..." (Establish Level 2 or 3 Proximity).
+- **Visual Agenda Frame:** Script a concise "Visual Agenda" statement that maps: Current State -> Destination -> Path [cite: 259-262].
+- **Alignment Check:** "Does that map to where you are?"
 
-### 2. Shape the Future (The Middle)
-*Goal: Reduce Cognitive Load. Define Change.*
-*CRUSH Focus Areas:* **{focus_areas}**
-- **Change:** Question defining "Where are you today?" vs. "Future State".
-- **{focus_topic_1}:** 2 High-impact questions mapping to the **People Path**.
-- **{focus_topic_2}:** 2 High-impact questions mapping to the **Company Path**.
+### Phase 3: Change [cite: 264]
+*Goal: Shift from Pain to Adoption Risk.*
+- **Unique Change Point (UCP):** Define the shift they need to make (e.g., Transactional -> Consultative).
+- **RUBIE Validation:** Ask 2 questions specific to the **{rubie_role}** perspective to validate their view of success/risk[cite: 268].
 
-### 3. Remove Fear (Harmonization)
-*Goal: Address Adoption Risk.*
-- **Harmonization:** 3 questions to uncover "Why might this NOT work?" (Blockers/Dependencies).
-- **Close:** Exact script for "Consolidate Clarity" (Not "Closing").
+### Phase 4: Solution [cite: 269]
+*Goal: Orchestrate Sense-Making.*
+- **Usage & Support Check:** Ask a question about "Day 1" (Usage) or "Implementation" (Support) to reduce fear of the future state[cite: 272].
+- **Recommendation:** "Based on this, I recommend we..." (Limit choices to reduce analysis paralysis)[cite: 273].
+
+### Phase 5: Closing — Harmonization [cite: 274]
+*Goal: Risk Removal.*
+- **Blocker Identification:** "Why might this NOT work here?" (Surface dependencies/friction) [cite: 124, 276].
+- **Risk Reversal:** "What do you need from us to feel safe moving to the next step?"[cite: 278].
 """
 
 # --- LOGIC MAPPING ---
 ROLE_LOGIC_MAP = {
     "Economic Buyer (Budget)": {
-        "logic": "Focus on Change, Results, Harmonization. They care about ROI and financial risk.",
+        "logic": "Focus on ROI, Financial Risk, and Opportunity Cost. Fear: Late-stage objections.",
         "focus_areas": "Change, Results, Harmonization",
         "topics": ["Results (ROI/Outcomes)", "Risk (Financial/Political)"]
     },
     "Benefactor (Outcome Owner)": {
-        "logic": "Focus on Change, Results, Harmonization. They care about business outcomes and performance.",
+        "logic": "Focus on Outcomes, Performance, and Value Realization. Fear: Perceived failure.",
         "focus_areas": "Change, Results, Harmonization",
         "topics": ["Results (KPIs)", "Impact (Business Value)"]
     },
     "User (Direct Usage)": {
-        "logic": "Focus on Usage, Support, Harmonization. They care about usability, effort, and day-to-day experience.",
+        "logic": "Focus on Usability, Effort, and Day-to-Day Experience. Fear: Workarounds/Abandonment.",
         "focus_areas": "Usage, Support, Harmonization",
         "topics": ["Usage (Day-to-Day)", "Support (Enablement)"]
     },
     "Implementor (Deployment)": {
-        "logic": "Focus on Support, Harmonization. They care about feasibility, complexity, and timelines.",
+        "logic": "Focus on Feasibility, Complexity, and Timelines. Fear: Delays/Cost Overruns.",
         "focus_areas": "Support, Harmonization",
         "topics": ["Implementation (Feasibility)", "Support (Resources)"]
     },
     "Ripple (Indirectly Affected)": {
-        "logic": "Focus strictly on Harmonization. They care about downstream impact and disruption.",
+        "logic": "Focus on Downstream Impact and Disruption. Fear: Unintended Consequences.",
         "focus_areas": "Harmonization",
         "topics": ["Disruption (Downstream)", "Dependencies"]
     }
 }
 
 # --- UI LAYOUT ---
-st.title("📞 CRUSH Sales Call Guide")
-st.markdown("Generates a **Holistic Sales Strategy** (Prep + Script) using Hybrid Research.")
+st.title("🧠 CRUSH Sales Engagement Guide")
+st.markdown("Generates a **Neuro-Behavioral Call Strategy** based on the Canonical Architecture.")
 
 with st.form("call_form"):
     col1, col2 = st.columns(2)
@@ -191,7 +187,7 @@ with st.form("call_form"):
                                   "Stage 3 (Ordered)", 
                                   "Stage 4 (Usage)", 
                                   "Stage 7 (Renew)"])
-        # NEW PROXIMITY FIELD
+        # PROXIMITY LEVEL
         proximity = st.selectbox("Current Proximity Level", 
                                  ["Level 1 (Direct - Insider)", 
                                   "Level 2 (Transferred - Referral)", 
@@ -203,7 +199,7 @@ with st.form("call_form"):
                              height=80)
     
     use_search = st.checkbox("Attempt Google Search (Grounding)", value=True)
-    submit = st.form_submit_button("Generate Strategy & Guide")
+    submit = st.form_submit_button("Generate Engagement Guide")
 
 if submit:
     if not customer_name or not context:
@@ -221,9 +217,6 @@ if submit:
                 proximity=proximity,
                 user_news=user_news if user_news else "None provided.",
                 role_logic=role_data['logic'],
-                focus_areas=role_data['focus_areas'],
-                focus_topic_1=role_data['topics'][0],
-                focus_topic_2=role_data['topics'][1] if len(role_data['topics']) > 1 else "Harmonization"
             )
             
             result_text, search_success = generate_call_guide(final_prompt, use_search=use_search)
@@ -233,6 +226,6 @@ if submit:
             elif use_search and search_success:
                 st.success("✅ Live Research Complete.")
             
-            st.markdown(f"### 📝 Strategic Guide for {customer_name}")
+            st.markdown(f"### 🧠 Engagement Strategy for {customer_name}")
             st.markdown(result_text)
             st.text_area("Copy Raw Text", value=result_text, height=100)
