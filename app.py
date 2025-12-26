@@ -1,10 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
 from google.api_core import exceptions
-import time
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="CRUSH Engagement Guide", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="CRUSH Canonical Guide", page_icon="🧠", layout="wide")
 
 # --- CSS ---
 st.markdown("""
@@ -37,119 +36,71 @@ if not api_key:
     st.stop()
 
 genai.configure(api_key=api_key)
-
-# --- MODEL CONFIGURATION ---
-# Using the experimental model as it works for your key
 MODEL_NAME = 'models/gemini-2.0-flash-exp'
 
 # --- GENERATION LOGIC ---
-def generate_call_guide(prompt, use_search=True):
-    # ATTEMPT 1: Search Mode
-    if use_search:
-        try:
-            model = genai.GenerativeModel(MODEL_NAME, tools='google_search_retrieval')
-            response = model.generate_content(prompt)
-            return response.text, True
-        except Exception:
-            pass 
-            
-    # ATTEMPT 2: Fallback (Safe Mode)
+def generate_guide(prompt):
     try:
         model = genai.GenerativeModel(MODEL_NAME)
         response = model.generate_content(prompt)
-        return response.text, False
+        return response.text
     except Exception as e:
-        return f"Critical Error: {str(e)}", False
+        return f"Error: {str(e)}"
 
 # --- PROMPT LOGIC ---
 MASTER_PROMPT = """
-You are an expert Sales Coach using the "CRUSH" methodology. 
-Your task is to write a **Sales Engagement Guide** based on the Canonical Architecture.
+You are an expert Sales Coach using the "CRUSH" methodology.
+Your task is to write a **Sales Engagement Guide** based strictly on the Canonical Architecture.
 
-**INSTRUCTION ON RESEARCH:**
-1. Check **User Provided News** below.
-2. If available, Search Google for **recent news** (last 6 months) about **{customer_name}**.
-3. Use the news to inform the "Proximity Hook" and "Harmonization" sections.
-
-**THEORETICAL BASIS (CANONICAL):**
-- [cite_start]**Parallel Paths:** Track Company Goals vs. People Fears[cite: 184].
-- [cite_start]**Neuroscience:** Low proximity triggers cortisol (defense); high proximity triggers oxytocin (trust)[cite: 204].
-- [cite_start]**Adoption Risk:** The primary barrier is not "lack of pain" but "fear of the future"[cite: 179].
+**CORE CRUSH PRINCIPLES:**
+1. [cite_start]**Parallel Paths:** You must separate the "Company Path" (Logic/Goals) from the "People Path" (Emotion/Fear)[cite: 184].
+2. [cite_start]**Adoption Risk:** The enemy is not competition; it is "Adoption Risk" (fear that the future state won't yield value)[cite: 179].
+3. [cite_start]**Visual Agenda:** You must script a "Visual Agenda" to lower cognitive load[cite: 227].
+4. **Harmonization:** You do not "close." [cite_start]You "Harmonize" (remove risk)[cite: 275].
 
 **INPUTS:**
 - Customer: {customer_name} ({industry})
-- Role: {rubie_role}
+- Product/Context: {context}
 - Stage: {cdm_stage}
-- Context: {context}
-- User Notes: "{user_news}"
-
-**LOGIC FOR THIS STAKEHOLDER ({rubie_role}):**
-{role_logic}
 
 **OUTPUT FORMAT (Markdown):**
 
-## 🧠 Phase 1: Pre-Call Preparation (Cognitive Scaffold)
-*Internal Strategy Only. Do not read to customer.*
-* **Company Path (Logic):** Identify 1 strategic goal and 1 business risk for {customer_name}.
-* **People Path (Emotion):** Identify the specific Aspiration and Fear for a **{rubie_role}** in this situation.
+## 🧠 Phase 1: Pre-Call Preparation (The Parallel Paths)
+[cite_start]*Define the dual tracks we must manage:* [cite: 186-193]
+* **🏢 Company Path (The Logic):** What is the business trying to achieve? (e.g., Efficiency, Market Share).
+* **👤 People Path (The Emotion):** What is the human afraid of? (e.g., Loss of status, Complexity, Looking foolish). *Note: You cannot solve a Person fear with a Company goal.*
 
 ---
 
 ## 📞 Rep-Facing Engagement Script
 
-### Phase 2: Opening (Trust Gateway)
-*Goal: Regulate neurochemistry. Set a collaborative frame.*
-- **Proximity Hook:** Write a natural opening line referencing the News/Context found.
-- **Visual Agenda:** Script the transition to a "Visual Agenda" (Past -> Future -> Path) to lower cognitive load.
-- **Check:** "Does that map to where you are?"
+### Phase 2: Opening (The Trust Gateway)
+[cite_start]*Goal: Regulate neurochemistry and lower cognitive load.* [cite: 258]
+* **The Visual Agenda Script:** Write a concise script that maps:
+    1. **Current State:** "We are here."
+    2. **Destination:** "We want to get here."
+    3. **Path:** "The steps between."
+* **Alignment Check:** "Does this map to how you see it?"
 
 ### Phase 3: Change (The UCP)
-*Goal: Shift from Pain to Adoption Risk.*
-- **Unique Change Point (UCP):** Ask a question that contrasts their Current State vs. Future State.
-- **RUBIE Validation:** Ask 2 questions specific to **{rubie_role}** concerns ({focus_areas}) to validate their view of success.
+[cite_start]*Goal: Shift from 'Pain' to 'Adoption Risk'.* [cite: 265]
+* **Unique Change Point (UCP):** Script a question that challenges their status quo.
+    * *Draft:* "Most companies in {industry} try to fix [Problem] by [Standard Approach], but they fail because of [Adoption Risk]. How are you ensuring your team actually adopts this change?"
 
 ### Phase 4: Solution (Sense-Making)
-*Goal: Orchestrate Sense-Making.*
-- **Usage & Support:** Ask a question about "Day 1" (Usage) or "Implementation" (Support) to reduce fear of the future state.
-- **Recommendation:** "Based on this, I recommend we..." (Limit choices).
+[cite_start]*Goal: Sell the safety of the decision, not the features.* [cite: 270]
+* **Usage & Support:** Script a specific question about "Day 1" or "Support" to prove safety.
+    * *Draft:* "The technology is the easy part. The hard part is [Usage Challenge]. How will we support your team on Day 1?"
 
 ### Phase 5: Closing (Harmonization)
-*Goal: Risk Removal.*
-- **Blocker Identification:** "Why might this NOT work here?" (Surface dependencies/friction).
-- **Risk Reversal:** "What do you need from us to feel safe moving to the next step?"
+[cite_start]*Goal: Risk Removal (Not 'Closing').* [cite: 275]
+* **The Harmonization Question:** Script a question to surface blockers.
+    * *Draft:* "Why might this *not* work inside {customer_name}? Who else needs to be aligned?"
+* **Risk Reversal:** "What do you need from us to feel safe moving to the next step?"
 """
 
-# --- LOGIC MAPPING ---
-ROLE_LOGIC_MAP = {
-    "Economic Buyer (Budget)": {
-        "logic": "Focus on ROI, Financial Risk, and Opportunity Cost. Fear: Late-stage objections.",
-        "focus_areas": "Change, Results, Harmonization",
-        "topics": ["Results (ROI/Outcomes)", "Risk (Financial/Political)"]
-    },
-    "Benefactor (Outcome Owner)": {
-        "logic": "Focus on Outcomes, Performance, and Value Realization. Fear: Perceived failure.",
-        "focus_areas": "Change, Results, Harmonization",
-        "topics": ["Results (KPIs)", "Impact (Business Value)"]
-    },
-    "User (Direct Usage)": {
-        "logic": "Focus on Usability, Effort, and Day-to-Day Experience. Fear: Workarounds/Abandonment.",
-        "focus_areas": "Usage, Support, Harmonization",
-        "topics": ["Usage (Day-to-Day)", "Support (Enablement)"]
-    },
-    "Implementor (Deployment)": {
-        "logic": "Focus on Feasibility, Complexity, and Timelines. Fear: Delays/Cost Overruns.",
-        "focus_areas": "Support, Harmonization",
-        "topics": ["Implementation (Feasibility)", "Support (Resources)"]
-    },
-    "Ripple (Indirectly Affected)": {
-        "logic": "Focus on Downstream Impact and Disruption. Fear: Unintended Consequences.",
-        "focus_areas": "Harmonization",
-        "topics": ["Disruption (Downstream)", "Dependencies"]
-    }
-}
-
 # --- UI LAYOUT ---
-st.title("🧠 CRUSH Engagement Guide")
+st.title("🧠 CRUSH Canonical Guide")
 st.markdown("Generates a **Neuro-Behavioral Call Strategy** based on the Canonical Architecture.")
 
 with st.form("call_form"):
@@ -157,7 +108,6 @@ with st.form("call_form"):
     with col1:
         customer_name = st.text_input("Customer Company Name", placeholder="e.g. Acme Corp")
         industry = st.text_input("Industry / Vertical", placeholder="e.g. Manufacturing")
-        rubie_role = st.selectbox("RUBIE Perspective", list(ROLE_LOGIC_MAP.keys()))
 
     with col2:
         context = st.text_input("Product/Context", placeholder="e.g. ERP Migration")
@@ -169,38 +119,22 @@ with st.form("call_form"):
                                   "Stage 4 (Usage)", 
                                   "Stage 7 (Renew)"])
 
-    user_news = st.text_area("Recent News / Context (Optional)", 
-                             placeholder="Paste recent news here if Search fails.",
-                             height=80)
-    
-    use_search = st.checkbox("Attempt Google Search (Grounding)", value=True)
-    submit = st.form_submit_button("Generate Engagement Guide")
+    submit = st.form_submit_button("Generate Guide")
 
 if submit:
     if not customer_name or not context:
         st.warning("⚠️ Please fill in Customer Name and Product Context.")
     else:
-        role_data = ROLE_LOGIC_MAP[rubie_role]
-        
-        with st.spinner(f"🔍 Analyzing '{customer_name}'..."):
+        with st.spinner(f"Drafting Canonical Guide for '{customer_name}'..."):
             final_prompt = MASTER_PROMPT.format(
                 customer_name=customer_name,
                 industry=industry,
-                rubie_role=rubie_role,
                 cdm_stage=cdm_stage,
-                context=context,
-                user_news=user_news if user_news else "None provided.",
-                role_logic=role_data['logic'],
-                focus_areas=role_data['focus_areas']
+                context=context
             )
             
-            result_text, search_success = generate_call_guide(final_prompt, use_search=use_search)
+            result_text = generate_guide(final_prompt)
             
-            if use_search and not search_success:
-                st.info("ℹ️ **Note:** Auto-Search unavailable. Using your notes & internal knowledge.")
-            elif use_search and search_success:
-                st.success("✅ Live Research Complete.")
-            
-            st.markdown(f"### 🧠 Engagement Strategy for {customer_name}")
+            st.markdown(f"### 🧠 Engagement Strategy: {customer_name}")
             st.markdown(result_text)
             st.text_area("Copy Raw Text", value=result_text, height=100)
