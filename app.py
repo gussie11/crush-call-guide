@@ -31,14 +31,29 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# CHANGED: Reverted to the standard stable model tag
-MODEL_NAME = 'models/gemini-1.5-flash'
+# We stick to the model YOU CONFIRMED works.
+MODEL_NAME = 'models/gemini-2.0-flash-exp'
 
-# --- RETRY LOGIC ---
-def generate_content_with_retry(prompt):
-    # We enable the 'google_search_retrieval' tool here
-    model = genai.GenerativeModel(MODEL_NAME, tools='google_search_retrieval')
+# --- GENERATION LOGIC ---
+def generate_call_guide(prompt, use_search=True):
+    """
+    Attempts to generate with Search first. 
+    If that fails (due to model/tool incompatibility), falls back to standard text.
+    """
+    # Attempt 1: Try with Google Search Tool
+    if use_search:
+        try:
+            # Explicitly checking for the experimental model's tool capability
+            model = genai.GenerativeModel(MODEL_NAME, tools='google_search_retrieval')
+            response = model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            # If search fails, we just log it (optional) and fall through to standard generation
+            print(f"Search tool failed: {e}. Falling back to standard mode.")
+    
+    # Attempt 2: Standard Text Generation (Fallback)
     try:
+        model = genai.GenerativeModel(MODEL_NAME) # No tools
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -49,16 +64,9 @@ MASTER_PROMPT = """
 You are an expert Sales Coach using the "CRUSH" methodology. 
 Your task is to write a **Rep-Facing Call Guide** for a specific sales conversation.
 
-**CRITICAL INSTRUCTION: RESEARCH PHASE**
-Before generating the script, use Google Search to find **recent news** (last 90 days) about **{customer_name}** (the company) in the **{industry}** industry. Look for:
-1. Executive changes (CFO, CEO, CTO).
-2. Mergers, acquisitions, or layoffs.
-3. Earnings reports or stock performance.
-4. Strategic initiatives or new product launches.
-
-**USE THIS RESEARCH TO:**
-1. Write a specific "Context Hook" in the Opening.
-2. Identify potential "Blockers" for the Harmonization section.
+**INSTRUCTION ON RESEARCH:**
+If you have access to Google Search tools, find **recent news** (last 90 days) about **{customer_name}**.
+If you DO NOT have access to search tools, rely on your internal knowledge and the industry context provided.
 
 **THE GOLDEN RULES:**
 1. This is NOT a pitch. Do not list features. Do not "sell".
@@ -77,14 +85,14 @@ Before generating the script, use Google Search to find **recent news** (last 90
 
 **OUTPUT FORMAT (Markdown):**
 
-> **🔍 AI Research Summary:**
-> *Briefly list 2-3 key news items you found about {customer_name} that influenced this guide.*
+> **🔍 Context / News Check:**
+> *Briefly state if you found specific news or if you are using general industry trends.*
 
 ---
 
 ## 1. Frame the Decision (The Opening)
 *Goal: Clarify why we are here and confirm the decision stage.*
-- **Context Hook:** "I saw the news about [Insert Real News Item Here]..." (Connect this news to the need for {context}).
+- **Context Hook:** "I saw the news about [Insert News OR Industry Trend]..." (Connect this to the need for {context}).
 - **Stage Check:** Include a specific question to confirm they are actually at **{cdm_stage}**.
 - **Role Check:** Include a question to confirm their role/concern as **{rubie_role}**.
 
@@ -98,7 +106,7 @@ Before generating the script, use Google Search to find **recent news** (last 90
 
 ## 3. Remove Fear (Harmonization)
 *Goal: Surface blockers. Answer: "Why might this NOT work?"*
-- Provide 3 specific "Harmonization" questions. (Use the news research to predict blockers. E.g., if they just merged, ask about data integration).
+- Provide 3 specific "Harmonization" questions. (Predict blockers based on the industry/news).
 - **Closing Question:** Provide the exact script for the "Consolidate Clarity" close.
 
 """
@@ -133,8 +141,8 @@ ROLE_LOGIC_MAP = {
 }
 
 # --- UI LAYOUT ---
-st.title("📞 CRUSH Sales Call Guide (Live Research)")
-st.markdown("Generates a call script using **real-time Google Search** data about the customer.")
+st.title("📞 CRUSH Sales Call Guide (Live)")
+st.markdown("Generates a call script using **Google Search** (if available) or standard AI context.")
 
 with st.form("call_form"):
     # Row 1: Basic Info
@@ -155,7 +163,7 @@ with st.form("call_form"):
                                   "Stage 4 (Usage)", 
                                   "Stage 7 (Renew)"])
         
-    submit = st.form_submit_button("Generate Call Guide & Research")
+    submit = st.form_submit_button("Generate Call Guide")
 
 if submit:
     if not customer_name or not context:
@@ -163,7 +171,7 @@ if submit:
     else:
         role_data = ROLE_LOGIC_MAP[rubie_role]
         
-        with st.spinner(f"🔍 Googling '{customer_name}' and drafting guide... (This takes ~10s)"):
+        with st.spinner(f"🔍 Analyzing '{customer_name}'..."):
             final_prompt = MASTER_PROMPT.format(
                 customer_name=customer_name,
                 industry=industry,
@@ -176,7 +184,8 @@ if submit:
                 focus_topic_2=role_data['topics'][1] if len(role_data['topics']) > 1 else "Harmonization"
             )
             
-            result = generate_content_with_retry(final_prompt)
+            # CALL THE ROBUST FUNCTION
+            result = generate_call_guide(final_prompt, use_search=True)
             
             st.markdown(f"### 📝 Call Guide for {customer_name}")
             st.markdown(result)
