@@ -89,31 +89,29 @@ Your task is to write a **Rep-Facing Call Guide** for a specific sales conversat
 
 **OUTPUT FORMAT (Markdown):**
 
-## 🎯 Context Briefing (Read First)
-*Summarize the key News or Industry Trends here as 3-4 distinct bullet points. Do not script this part; just list the facts.*
-* **News/Trend:** ...
-* **Strategic implication:** ...
+> **🔍 Context Used:**
+> *Briefly state if you used User News, Google Search, or General Trends.*
 
 ---
 
 ## 1. Frame the Decision (The Opening)
 *Goal: Clarify why we are here and confirm the decision stage.*
-- **Context Hook:** Provide a natural, short opening line referencing the context above (e.g., "I saw the news about X...").
-- **Stage Check:** Question to confirm they are at **{cdm_stage}**.
-- **Role Check:** Question to confirm their role as **{rubie_role}**.
+- **Context Hook:** "I saw the news about [Insert Specific News/Trend]..." (Connect this to the need for {context}).
+- **Stage Check:** Include a specific question to confirm they are actually at **{cdm_stage}**.
+- **Role Check:** Include a question to confirm their role/concern as **{rubie_role}**.
 
 ## 2. Shape the Future (The Middle)
 *Goal: Define specific adoption outcomes and risk.*
 *CRUSH Focus Areas:* **{focus_areas}**
-- **Change:** Question defining where they are today vs. future state.
-- **{focus_topic_1}:** 2 High-impact questions.
-- **{focus_topic_2}:** 2 High-impact questions.
+- **Change:** Ask questions to define where they are today vs. where they want to be.
+- **{focus_topic_1}:** Ask 2 high-impact questions specific to their role's concern.
+- **{focus_topic_2}:** Ask 2 high-impact questions specific to their role's concern.
 - *Remind the rep: "If Change is unclear, stop."*
 
 ## 3. Remove Fear (Harmonization)
-*Goal: Surface blockers.*
-- **Harmonization Questions:** 3 specific questions to uncover friction/dependencies (Use the Context Briefing to predict these blockers).
-- **Close:** Exact script for "Consolidate Clarity".
+*Goal: Surface blockers. Answer: "Why might this NOT work?"*
+- Provide 3 specific "Harmonization" questions. (Predict blockers based on the news/context provided above).
+- **Closing Question:** Provide the exact script for the "Consolidate Clarity" close.
 """
 
 # --- LOGIC MAPPING ---
