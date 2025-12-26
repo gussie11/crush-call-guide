@@ -4,7 +4,7 @@ from google.api_core import exceptions
 import time
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="CRUSH Sales Call Guide (Live)", page_icon="📡", layout="wide")
+st.set_page_config(page_title="CRUSH Sales Call Guide", page_icon="📞", layout="wide")
 
 # --- CSS ---
 st.markdown("""
@@ -15,6 +15,13 @@ div.stButton > button {
     height: 3em;
     background-color: #f0f2f6;
     border: 1px solid #d0d2d6;
+}
+.header-box {
+    padding: 1rem;
+    background-color: #e8f0fe;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 5px solid #4285f4;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -31,27 +38,29 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# We stick to the model YOU CONFIRMED works.
+# --- MODEL CONFIGURATION ---
+# We use the version you confirmed works: 2.0 Flash Experimental
 MODEL_NAME = 'models/gemini-2.0-flash-exp'
 
-# --- GENERATION LOGIC ---
+# --- GENERATION LOGIC (Safe Mode) ---
 def generate_call_guide(prompt, use_search=True):
     """
-    Attempts to generate with Search first. 
-    If that fails (due to model/tool incompatibility), falls back to standard text.
+    1. Tries to use Google Search with the model.
+    2. If that fails (404/Permission error), falls back to standard text mode.
     """
-    # Attempt 1: Try with Google Search Tool
+    
+    # ATTEMPT 1: Search Mode
     if use_search:
         try:
-            # Explicitly checking for the experimental model's tool capability
+            # Try to initialize with the search tool
             model = genai.GenerativeModel(MODEL_NAME, tools='google_search_retrieval')
             response = model.generate_content(prompt)
             return response.text
-        except Exception as e:
-            # If search fails, we just log it (optional) and fall through to standard generation
-            print(f"Search tool failed: {e}. Falling back to standard mode.")
+        except Exception:
+            # Silently fail and move to Attempt 2
+            pass
     
-    # Attempt 2: Standard Text Generation (Fallback)
+    # ATTEMPT 2: Text-Only Mode (Fallback)
     try:
         model = genai.GenerativeModel(MODEL_NAME) # No tools
         response = model.generate_content(prompt)
@@ -108,7 +117,6 @@ If you DO NOT have access to search tools, rely on your internal knowledge and t
 *Goal: Surface blockers. Answer: "Why might this NOT work?"*
 - Provide 3 specific "Harmonization" questions. (Predict blockers based on the industry/news).
 - **Closing Question:** Provide the exact script for the "Consolidate Clarity" close.
-
 """
 
 # --- LOGIC MAPPING ---
@@ -141,7 +149,7 @@ ROLE_LOGIC_MAP = {
 }
 
 # --- UI LAYOUT ---
-st.title("📞 CRUSH Sales Call Guide (Live)")
+st.title("📞 CRUSH Sales Call Guide")
 st.markdown("Generates a call script using **Google Search** (if available) or standard AI context.")
 
 with st.form("call_form"):
@@ -155,13 +163,18 @@ with st.form("call_form"):
         rubie_role = st.selectbox("RUBIE Perspective", list(ROLE_LOGIC_MAP.keys()))
 
     # Row 2: Stage
-    cdm_stage = st.selectbox("Current Decision Stage (CDM)", 
+    col3, col4 = st.columns(2)
+    with col3:
+        cdm_stage = st.selectbox("Current Decision Stage (CDM)", 
                                  ["Stage 0->1 (Mobilizing)", 
                                   "Stage 1 (Sources)", 
                                   "Stage 2 (Selected)", 
                                   "Stage 3 (Ordered)", 
                                   "Stage 4 (Usage)", 
                                   "Stage 7 (Renew)"])
+    with col4:
+        # Search toggle
+        use_search = st.checkbox("Attempt Google Search (Grounding)", value=True)
         
     submit = st.form_submit_button("Generate Call Guide")
 
@@ -185,7 +198,7 @@ if submit:
             )
             
             # CALL THE ROBUST FUNCTION
-            result = generate_call_guide(final_prompt, use_search=True)
+            result = generate_call_guide(final_prompt, use_search=use_search)
             
             st.markdown(f"### 📝 Call Guide for {customer_name}")
             st.markdown(result)
