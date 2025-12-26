@@ -46,7 +46,8 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # --- MODEL CONFIGURATION ---
-MODEL_NAME = 'models/gemini-1.5-flash'
+# We are sticking to the version that works for your key.
+MODEL_NAME = 'models/gemini-2.0-flash-exp'
 
 # --- GENERATION LOGIC ---
 def generate_call_guide(prompt, use_search=True):
@@ -59,7 +60,7 @@ def generate_call_guide(prompt, use_search=True):
         except Exception:
             pass 
             
-    # ATTEMPT 2: Fallback
+    # ATTEMPT 2: Fallback (Safe Mode)
     try:
         model = genai.GenerativeModel(MODEL_NAME)
         response = model.generate_content(prompt)
