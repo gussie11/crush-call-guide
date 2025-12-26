@@ -160,3 +160,48 @@ with st.form("call_form"):
 
     col3, col4 = st.columns(2)
     with col3:
+        cdm_stage = st.selectbox("Current Decision Stage (CDM)", 
+                                 ["Stage 0->1 (Mobilizing)", 
+                                  "Stage 1 (Sources)", 
+                                  "Stage 2 (Selected)", 
+                                  "Stage 3 (Ordered)", 
+                                  "Stage 4 (Usage)", 
+                                  "Stage 7 (Renew)"])
+    with col4:
+        user_news = st.text_area("Recent News / Context (Optional)", 
+                                 placeholder="Paste recent news here if Search fails.",
+                                 height=100)
+    
+    use_search = st.checkbox("Attempt Google Search (Grounding)", value=True)
+    submit = st.form_submit_button("Generate Call Guide")
+
+if submit:
+    if not customer_name or not context:
+        st.warning("⚠️ Please fill in Customer Name and Product Context.")
+    else:
+        role_data = ROLE_LOGIC_MAP[rubie_role]
+        
+        with st.spinner(f"🔍 Drafting guide for '{customer_name}'..."):
+            final_prompt = MASTER_PROMPT.format(
+                customer_name=customer_name,
+                industry=industry,
+                rubie_role=rubie_role,
+                cdm_stage=cdm_stage,
+                context=context,
+                user_news=user_news if user_news else "None provided.",
+                role_logic=role_data['logic'],
+                focus_areas=role_data['focus_areas'],
+                focus_topic_1=role_data['topics'][0],
+                focus_topic_2=role_data['topics'][1] if len(role_data['topics']) > 1 else "Harmonization"
+            )
+            
+            result_text, search_success = generate_call_guide(final_prompt, use_search=use_search)
+            
+            if use_search and not search_success:
+                st.info("ℹ️ **Note:** Auto-Search unavailable. Using your notes & internal knowledge.")
+            elif use_search and search_success:
+                st.success("✅ Live Research Complete.")
+            
+            st.markdown(f"### 📝 Call Guide for {customer_name}")
+            st.markdown(result_text)
+            st.text_area("Copy Raw Text", value=result_text, height=100)
