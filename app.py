@@ -62,13 +62,13 @@ def generate_call_guide(prompt, use_search=True):
 
 # --- PROMPT LOGIC ---
 MASTER_PROMPT = """
-You are an elite salesperson executing a "Progression Call" using the CRUSH methodology.
+You are an elite Sales Coach executing a "Progression Call" using the CRUSH methodology.
 Your goal is to write a **Narrative Playbook** for an upcoming meeting. 
 
 **CONTEXT:**
 - This is NOT a cold call. The door is open.
 - The goal is not to "pitch" but to orchestrate a decision.
-- You must speak in natural, fluid paragraphs, explaining the "Why" and the "How".
+- You must speak in natural, fluid paragraphs.
 
 **INPUTS:**
 - Customer: {customer_name} ({industry})
@@ -81,34 +81,35 @@ Your goal is to write a **Narrative Playbook** for an upcoming meeting.
 2. If available, Search Google for recent news (last 6 months) about **{customer_name}** to use as conversational bridges.
 3. If no news found, rely on industry trends.
 
-**OUTPUT FORMAT (Narrative Style):**
+**OUTPUT FORMAT:**
 
 ## 1. How to Prepare (The Mindset)
 *Write 2 short paragraphs explaining exactly what the rep needs to get straight in their head before they dial.*
-- [cite_start]Focus on separating the "Company Path" (Logic/Goals) from the "People Path" (Emotion/Fear) [cite: 186-193].
-- Explain specifically what Adoption Risk looks like for this customer type.
+- Explain the distinction between the "Company Goal" (Logic) and the "Person's Fear" (Emotion) for this specific deal.
+- Define what "Adoption Risk" likely looks like here (e.g., "They are afraid of X...").
 
 ---
 
 ## 2. The Talk Track (Execution)
 
 ### The Opening (Regulating the Room)
-*Write a paragraph describing how to start.* - Explain why we don't just say "How are you?".
-- [cite_start]**Script:** Write the exact opening lines using a "Visual Agenda" to lower cognitive load[cite: 227]. Use the news/context provided as a bridge.
-- **Bridge:** Show how to transition from the pleasantries into the Agenda.
+*Explain in one sentence why we start with a Visual Agenda instead of pleasantries.*
+**The Script:**
+> Write the exact opening lines. Start with a reference to the news/context provided, then pivot immediately to a "Visual Agenda" to set the frame. 
+> "I saw the news about X... which is actually why I wanted to frame our time today..."
 
 ### The Middle (Shaping the Future)
-*This is the meat of the call.*
-- [cite_start]**Script:** Write the specific questions to ask to define "Change" vs "Results"[cite: 266]. 
-- Explain how to pivot the conversation if they get stuck on features.
-- [cite_start]Provide a "Sense-Making" statement that clarifies where they are today vs. where they want to be[cite: 270].
+*Explain that we need to pivot from "Features" to "Change".*
+**The Script:**
+> Write the specific questions to ask to define where they are today vs. where they want to be.
+> Provide a "Sense-Making" statement: "It sounds like you are trying to move from [Current State] to [Future State], is that right?"
 
 ### The End (Harmonization)
-*Don't "Close". Harmonize.*
-- Explain why pushing for a "Next Step" feels aggressive here.
-- **Script:** Write the "Harmonization" questions to uncover blockers (e.g., "Why might this NOT work inside {customer_name}?").
-- [cite_start]**Script:** Provide the final "Consolidate Clarity" statement to end the call safely[cite: 279].
-
+*Explain why we don't "Close" but instead "Harmonize".*
+**The Script:**
+> Write the specific question to uncover blockers. 
+> "Typically, initiatives like this fail because of [Blocker]. Why might this NOT work inside {customer_name}?"
+> End with the "Consolidate Clarity" statement: "Based on this, what do you need from us to feel confident moving forward?"
 """
 
 # --- UI LAYOUT ---
