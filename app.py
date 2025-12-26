@@ -39,10 +39,10 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # --- MODEL CONFIGURATION ---
-# We use 1.5-flash because it is the stable standard for Google Search grounding.
+# We use 1.5-flash as the standard stable model for Search Grounding
 MODEL_NAME = 'models/gemini-1.5-flash'
 
-# --- GENERATION LOGIC (Debug Mode) ---
+# --- GENERATION LOGIC (Robust Mode) ---
 def generate_call_guide(prompt, use_search=True):
     """
     1. Tries to use Google Search with the model.
@@ -55,19 +55,18 @@ def generate_call_guide(prompt, use_search=True):
             # Try to initialize with the search tool
             model = genai.GenerativeModel(MODEL_NAME, tools='google_search_retrieval')
             response = model.generate_content(prompt)
-            return response.text
+            return response.text, True  # Success = True
         except Exception as e:
-            # SHOW THE ERROR ON SCREEN so we know what's wrong
-            st.warning(f"⚠️ Google Search failed. Falling back to internal knowledge.\n\n**Error details:** {e}")
-            # Fall through to Attempt 2
-    
+            # Return the error to display it, and indicate failure
+            return f"Search Error: {str(e)}", False
+            
     # ATTEMPT 2: Text-Only Mode (Fallback)
     try:
         model = genai.GenerativeModel(MODEL_NAME) # No tools
         response = model.generate_content(prompt)
-        return response.text
+        return response.text, False # Success = False (we used fallback)
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Critical Error: {str(e)}", False
 
 # --- PROMPT LOGIC ---
 MASTER_PROMPT = """
@@ -75,7 +74,7 @@ You are an expert Sales Coach using the "CRUSH" methodology.
 Your task is to write a **Rep-Facing Call Guide** for a specific sales conversation.
 
 **INSTRUCTION ON RESEARCH:**
-If you have access to Google Search tools, find **recent news** (last 90 days) about **{customer_name}** in the **{industry}** sector.
+If you have access to Google Search tools, find **recent news** (last 6 months) about **{customer_name}** in the **{industry}** sector.
 Look for: Executive changes, M&A, Stock performance, or Strategic shifts.
 If you DO NOT have access to search tools, rely on your internal knowledge and the industry context provided.
 
@@ -97,7 +96,7 @@ If you DO NOT have access to search tools, rely on your internal knowledge and t
 **OUTPUT FORMAT (Markdown):**
 
 > **🔍 Context / News Check:**
-> *Briefly state if you found specific news or if you are using general industry trends.*
+> *Briefly state if you found specific news. If yes, list 2-3 headlines. If no, state that you are using general industry trends.*
 
 ---
 
@@ -199,9 +198,21 @@ if submit:
                 focus_topic_2=role_data['topics'][1] if len(role_data['topics']) > 1 else "Harmonization"
             )
             
-            # CALL THE ROBUST FUNCTION
-            result = generate_call_guide(final_prompt, use_search=use_search)
+            # RUN GENERATION
+            result_text, search_success = generate_call_guide(final_prompt, use_search=use_search)
+            
+            # HANDLE FALLBACK IF SEARCH FAILED
+            if use_search and not search_success:
+                # If we tried to search but failed, we call the generation AGAIN in fallback mode
+                # to get the actual text result (since the first return was an error message)
+                error_msg = result_text # The first return was the error
+                st.warning(f"⚠️ Google Search failed. Falling back to internal knowledge.\n\n**Debug Error:** {error_msg}")
+                result_text, _ = generate_call_guide(final_prompt, use_search=False)
+            
+            # SUCCESS MESSAGE
+            elif use_search and search_success:
+                st.success("✅ Google Search Active: Live data integrated.")
             
             st.markdown(f"### 📝 Call Guide for {customer_name}")
-            st.markdown(result)
-            st.text_area("Copy Raw Text", value=result, height=100)
+            st.markdown(result_text)
+            st.text_area("Copy Raw Text", value=result_text, height=100)
